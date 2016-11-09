@@ -1,3 +1,5 @@
 /vendor
 /web/files
 /web/temp
+/.idea
+/app/config/parameters.php
