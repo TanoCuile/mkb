@@ -8,16 +8,8 @@ use Service\NodeGenerator;
 use Silex\Application;
 
 if ($app) {
-    $app['field_generator'] = function (Application $app) {
-        return new FieldGenerator($app['db']);
-    };
-
-    $app['node_generator'] = function (Application $app) {
-        return new NodeGenerator($app['field_generator'], $app['db']);
-    };
-
     $app['book_generator'] = function(Application $app){
-        return new Service\BookGenerator($app['node_generator'], $app['db']);
+        return new Service\BookGenerator();
     };
 
     $app['book_repository'] = function(Application $app){

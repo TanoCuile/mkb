@@ -19,9 +19,6 @@ class BookGenerator {
     const LASTNAME_LETTER_WIDTH = 360;
     const LASTNAME_LETTER_HEIGHT = 360;
 
-    private $nodeGenerator;
-    private $db;
-
     private $scenario = [
         self::SMALL_LETTERS => [
             'callback' => 'initializeSmallImages'
@@ -78,10 +75,8 @@ class BookGenerator {
      * BookGenerator constructor.
      * @param \Service\NodeGenerator $nodeGenerator
      */
-    public function __construct(NodeGenerator $nodeGenerator, \mysqli $db)
+    public function __construct()
     {
-        $this->nodeGenerator = $nodeGenerator;
-        $this->db = $db;
     }
 
     public function generateBook($firstName, $lastName, $gender, $age = 14, $uniqueId = null) {
