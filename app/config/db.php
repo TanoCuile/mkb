@@ -18,6 +18,6 @@ if ($app) {
         return $connection;
     };
     // Load service
-    $app['db'];
+//    $app['db'];
 } else
     throw new RuntimeException("Application not initialized");
