@@ -3,3 +3,5 @@
 /web/temp
 /.idea
 /app/config/parameters.php
+composer.lock
+composer.phar
