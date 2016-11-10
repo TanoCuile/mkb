@@ -387,15 +387,7 @@ class BookGenerator {
         $path = $this->getPageImagePath($gender, $age, $imageTitle, $variant, $side, $fileTitle);
         FileSystemUtils::saveFileTo(fopen($path, 'r'), $resultImagePath);
 
-        $imageData = FileSystemUtils::getImageData($resultImagePath);
-        $book->addImage(
-            $resultImagePath,
-            $alt,
-            $title,
-            $imageData[0],
-            $imageData[1],
-            $fileTitle ? $fileTitle : $imageTitle
-        );
+        $this->addImageToBook($book, $resultImagePath, $alt, $title, $fileTitle ? $fileTitle : $imageTitle);
     }
 
     /**
@@ -523,12 +515,14 @@ class BookGenerator {
     )
     {
         $imageData = FileSystemUtils::getImageData($resultImagePath);
+        $smallImagePath = ImageWorker::scaleAndCrop($resultImagePath, $imageData[0], $imageData[1], 460, 330);
         $book->addImage(
             $resultImagePath,
             $alt,
             $title,
             $imageData[0],
             $imageData[1],
+            $smallImagePath,
             $serverImageName
         );
     }

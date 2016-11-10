@@ -186,9 +186,10 @@ class JsonBook {
         ];
     }
 
-    public function addImage($url, $alt, $title, $width, $height, $serverImageName) {
+    public function addImage($url, $alt, $title, $width, $height, $smallImagePath, $serverImageName) {
         $this->data['images'][] = [
             'url' => FileSystemUtils::getWebPath($url),
+            'small_image' => FileSystemUtils::getWebPath($smallImagePath),
             'alt' => $alt,
             'title' => $title,
             'width' => $width,

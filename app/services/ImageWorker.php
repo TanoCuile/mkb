@@ -249,4 +249,34 @@ class ImageWorker
             imagedestroy($im);
         }
     }
+
+    static function scaleAndCrop($originalPath, $originalWidth, $originalHeight, $width, $height) {
+        $image = imagecreatefrompng($originalPath);
+        $resultImagePath = dirname($originalPath) . '/small_' . basename($originalPath);
+
+//        $k = $height/$width;
+//        if ($height/$width < $k ) {
+//            $k = $height/$width;
+//        }
+//
+//        $dx = $originalWidth - $width;
+//        $dy = $originalHeight - $height;
+//        $x = $dx / 2 - $dy / 2;
+//        $y = 0;
+//        if ($dx < $dy) {
+//            $x = 0;
+//            $y = $dy / 2 - $dx / 2;
+//        }
+
+        $destination = imagecreatetruecolor($width, $height);
+
+        imagecopyresampled($destination, $image, 0, 0, 0, 0, $width, $height, $originalWidth, $originalHeight);
+
+        imagepng($destination, $resultImagePath);
+
+        imagedestroy($destination);
+        imagedestroy($image);
+
+        return $resultImagePath;
+    }
 }
