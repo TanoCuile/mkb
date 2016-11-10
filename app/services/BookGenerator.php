@@ -48,10 +48,6 @@ class BookGenerator {
             'callback' => 'addFinale',
             'fileTitle' => 'finale1'
         ],
-//        NodeTitleCompatibility::FINALE_1_2_PAGE => [
-//            'callback' => 'addFinale',
-//            'fileTitle' => 'finale1'
-//        ],
         self::LASTNAME_STORY => [
             'callback' => 'addLastNameStory'
         ],
@@ -73,7 +69,7 @@ class BookGenerator {
 
     /**
      * BookGenerator constructor.
-     * @param \Service\NodeGenerator $nodeGenerator
+     * 
      */
     public function __construct()
     {
@@ -140,55 +136,53 @@ class BookGenerator {
             );
         }
 
-        $imageTitle = NodeTitleCompatibility::getRealTitle(NodeTitleCompatibility::START_PAGE);
-        $resultImagePath = FileSystemUtils::getFileRealPath($this->getPagesDirPath($uniqueId) . $imageTitle . '.png');
-        FileSystemUtils::mkpath(dirname($resultImagePath));
-        $text_options['saved_path'] = $resultImagePath;
-        $path = FileSystemUtils::getPagePath($gender, $age, $imageTitle, 1, 'L');
+        $imageUniquePath = NodeTitleCompatibility::getRealTitle(NodeTitleCompatibility::START_PAGE);
+        $resultImagePath = FileSystemUtils::getFileRealPath($this->getPagesDirPath($uniqueId) . $imageUniquePath . '.png');
 
-        $this->putTextToImage($path . '/' . $imageTitle . '.png', Utils::strtoupper($firstNameString), $uniqueId, $font, $text_options);
-        $imageData = FileSystemUtils::getImageData($resultImagePath);
-        $book->addImage($resultImagePath, $alt, $title, $imageData[0], $imageData[1], NodeTitleCompatibility::START_PAGE);
+        $path = FileSystemUtils::getPagePath($gender, $age, $imageUniquePath, 1, 'L') . '/' . $imageUniquePath . '.png';
+        $serverImageName = NodeTitleCompatibility::START_PAGE . '.png';
+
+        ImageWorker::saveImageWithText($path, Utils::strtoupper($firstNameString), $font, $text_options, $resultImagePath);
+
+        $this->addImageToBook($book, $resultImagePath, $alt, $title, $serverImageName);
         return true;
     }
 
     protected function addIntro0(JsonBook $book, $step, $stepData, $uniqueId):bool {
-        $alt = 'intro0';
+        $variant = 1;
+        $alt = $step;
         $title = '';
         $gender = $book->getGender();
         $age = $book->getAgeCategory();
         $lastNameString = trim(mb_strtolower($book->getLastName()));
-        $imageTitle = NodeTitleCompatibility::INTRO_0_PAGE;
+        $imageUniquePath = NodeTitleCompatibility::INTRO_0_PAGE;
 
-        $variant = 1;
-        $this->saveJustCopy($book, $uniqueId, $gender, $age, $imageTitle, 1, 'L', $alt, $title);
+        $this
+            ->saveJustCopy($book, $uniqueId, $gender, $age, $imageUniquePath, $variant, 'L', $alt, $title);
 
-        $resultImagePath = $this->getPagesDirPath($uniqueId)
-            . $this->getPageImageFile($gender, $age, $imageTitle, $variant, 'R') . '.png';
-        $path = $this->getPageImagePath($gender, $age, $imageTitle, $variant, 'R');
-        $im = imagecreatefrompng($path);
+        $realImageName =
+            $this->getPageImageFile($gender, $age, $imageUniquePath, $variant, 'R') . '.png';
 
-        $font_path = FileSystemUtils::getNadiriiFontPath();
-        $black = imagecolorallocate($im, 0, 0, 0);
-        imagettftext($im, 36, 0, 280, 145, $black, $font_path, $lastNameString);
+        $resultImagePath = $this->getPagesDirPath($uniqueId) . $realImageName;
+        $path = $this->getPageImagePath($gender, $age, $imageUniquePath, $variant, 'R');
 
-        $a = imagepng($im, $resultImagePath);
-        if (!empty($im)) {
-            imagedestroy($im);
-        }
-        $imageData = FileSystemUtils::getImageData($resultImagePath);
-        $book->addImage($resultImagePath, $alt, $title, $imageData[0], $imageData[$variant], $imageTitle);
+        ImageWorker::saveImageWithLabel($path, $lastNameString, $resultImagePath);
+
+        $this->addImageToBook($book, $resultImagePath, $alt, $title, $imageUniquePath);
+
         return true;
     }
 
     protected function addIntro(JsonBook $book, $step, $stepData, $uniqueId):bool {
-        $imageTitle = $step;
+        $imageUniquePath = $step;
         $alt = 'intro0';
         $title = '';
         $gender = $book->getGender();
         $age = $book->getAgeCategory();
-        $this->saveJustCopy($book, $uniqueId, $gender, $age, $imageTitle, 1, 'L', $alt, $title);
-        $this->saveJustCopy($book, $uniqueId, $gender, $age, $imageTitle, 1, 'R', $alt, $title);
+
+        $this->saveJustCopy($book, $uniqueId, $gender, $age, $imageUniquePath, 1, 'L', $alt, $title);
+        $this->saveJustCopy($book, $uniqueId, $gender, $age, $imageUniquePath, 1, 'R', $alt, $title);
+
         return true;
     }
 
@@ -233,13 +227,12 @@ class BookGenerator {
         $title = '';
         $gender = $book->getGender();
         $age = $book->getAgeCategory();
-        $lastNameString = trim(mb_strtolower($book->getLastName()));
-        $imageTitle = isset($stepData['fileTitle']) ? $stepData['fileTitle'] : $step;
+        $uniqueImagePath = isset($stepData['fileTitle']) ? $stepData['fileTitle'] : $step;
 
-        $this->saveJustCopy($book, $uniqueId, $gender, $age, $imageTitle, 1, 'L', $alt, $title);
+        $this->saveJustCopy($book, $uniqueId, $gender, $age, $uniqueImagePath, 1, 'L', $alt, $title);
 
-        if ($imageTitle != 'finale4') {
-            $this->saveJustCopy($book, $uniqueId, $gender, $age, $imageTitle, 1, 'R', $alt, $title);
+        if ($uniqueImagePath != 'finale4') {
+            $this->saveJustCopy($book, $uniqueId, $gender, $age, $uniqueImagePath, 1, 'R', $alt, $title);
         }
         return true;
     }
@@ -249,90 +242,18 @@ class BookGenerator {
         $title = '';
         $gender = $book->getGender();
         $age = $book->getAgeCategory();
-        $imageTitle = 'finale1';
+        $serverImageName = 'Finale2_01_L';
+        $finalImagePath =  $this->getPagesDirPath($uniqueId) . $serverImageName . '.png';
 
         // Trinkets
-        $sourceImages = [];
-        foreach ($book->trinkets as $trinket) {
-            $sourceImages[] = imagecreatefrompng(FileSystemUtils::getTrinketsImagesPath() . '/resized/' . $trinket . '.png');
-        }
+        $sourceImages = ImageWorker::getLetterImages($book->trinkets);
 
         // Background
-        if (!file_exists($this->getPageImagePath($gender, $age, 'finale2', 1, 'L'))) {
-            $path = FileSystemUtils::getABCPath() . '/background.jpg';
-        }
-        else {
-            $path = $this->getPageImagePath($gender, $age, 'finale2', 1, 'L');
-        }
-        $book->setBackground($path);
-        $im = imagecreatefrompng($path);
+        $path = $this->setBookBackground($book, $gender, $age);
+        ImageWorker::addLastNameFinale($path, $sourceImages);
 
-        // Set the margins for the stamp and get the height/width of the stamp image.
-        $y = imagesy($im);
-        $x = imagesx($im) - 100;
-        $letter_width = self::LASTNAME_LETTER_WIDTH;
-        $countSourceImages = count($sourceImages);
+        $this->addImageToBook($book, $finalImagePath, $alt, $title, $serverImageName);
 
-        // Reduce width and margin.
-        $percent = 1;
-        if ($countSourceImages < 6) {
-            $percent = 0.6;
-        }
-        if ($countSourceImages == 5) {
-            $percent = 0.45;
-        }
-        if ($countSourceImages >= 6) {
-            $percent = 0.4;
-        }
-        $letter_width = ceil($letter_width * $percent);
-
-        if ($countSourceImages * $letter_width > $x) {
-            $letter_width = ceil(($x / count($sourceImages)) - ($x / count($sourceImages) / 15));
-            $marge_left = 0;
-        }
-        elseif($countSourceImages <= 6) {
-            $all_letters_width = count($sourceImages) * $letter_width;
-            $marge_left = 0.8*($x * 0.8 - $all_letters_width) / 2;
-        }
-        else {
-            $all_letters_width = count($sourceImages) * $letter_width;
-            $marge_left = ($x - $all_letters_width) / 8;
-        }
-        foreach ($sourceImages as $img) {
-            // Resize image.
-            $old_width = imagesx($img);
-            $old_height = imagesy($img);
-            $new_width = $old_width * $percent;
-            $new_height = $old_height * $percent;
-            $image_p = imagecreatetruecolor($new_width, $new_height);
-            imagesavealpha($image_p, TRUE);
-            $color = imagecolorallocatealpha($image_p, 0x00, 0x00, 0x00, 127);
-            imagefill($image_p, 0, 0, $color);
-            imagecopyresampled($image_p, $img, 0, 0, 0, 0, $new_width, $new_height, $old_width, $old_height);
-
-            // Copy the stamp image onto our photo using
-            // the margin offsets and the photo width to
-            // calculate positioning of the stamp.
-            imagecopy($im, $image_p, $marge_left, $y / 2 - $new_height / 2, 0, 0, $new_width, $new_height);
-            $marge_left += $letter_width;
-        }
-        // Output and free memory.
-        $time = time();
-        $string = trim(preg_replace('/[-\s]+/', '-', $book->getLastName()), '-');
-        $path =  $this->getPagesDirPath($uniqueId) . 'Finale2_01_L.png';
-        $a = imagepng($im, $path);
-        $imageData = FileSystemUtils::getImageData($path);
-        $book->addImage(
-            $path,
-            $alt,
-            $title,
-            $imageData[0],
-            $imageData[1],
-            'Finale2_01_L'
-        );
-        if (!empty($im)) {
-            imagedestroy($im);
-        }
         return true;
     }
 
@@ -341,34 +262,21 @@ class BookGenerator {
         $title = '';
         $gender = $book->getGender();
         $age = $book->getAgeCategory();
+        $realImageTitle = 'Finale2_01_R';
 
         $path = $this->getPageImagePath($gender, $age, 'finale2', 1, 'R');
-        $im = imagecreatefrompng($path);
+        $resultImagePath = $this->getPagesDirPath($uniqueId) . $realImageTitle . '.png';
 
-        $time = time();
-        $string = ucfirst(trim(preg_replace('/[-\s]+/', '-', $book->getFirstName()), '-'));
-
-        $font_path = FileSystemUtils::getKOMTXTFontPath();
-        $black = imagecolorallocate($im, 0, 0, 0);
-        if ($age == '14') {
-            imagettftext($im, 35, 0, 105, 210, $black, $font_path, '');
-        }
-        else {
-            // TODO: translate
-            imagettftext($im, 35, 0, 105, 210, $black, $font_path, 'Prince ' . $string);
-        }
-
-        $file = $this->getPagesDirPath($uniqueId) . 'Finale2_01_R.png';
-        $a = imagepng($im, $file);
-        $imageData = FileSystemUtils::getImageData($file);
-        $book->addImage(
-            $file,
-            $alt,
-            $title,
-            $imageData[0],
-            $imageData[1],
-            'Finale2_01_R'
+        $resultImagePath = ImageWorker::addTestToLastnameStoryPair(
+            $book,
+            $uniqueId,
+            $gender,
+            $age,
+            $realImageTitle,
+            $path,
+            $resultImagePath
         );
+        $this->addImageToBook($book, $resultImagePath, $alt, $title, $realImageTitle);
 
         return true;
     }
@@ -378,32 +286,16 @@ class BookGenerator {
         $title = '';
         $gender = $book->getGender();
         $age = $book->getAgeCategory();
-        $path = $this->getPageImagePath($gender, $age, 'finale3', 1, 'L');
-        $im = imagecreatefrompng($path);
-
-        $time = time();
-        //$string = ucfirst(trim(preg_replace('/[-\s]+/', '-', $form_state['values']['field_book_last_name']['und'][0]['value']), '-'));
-        $string = ucfirst(trim($book->getLastName()));
-
-        $font_path = FileSystemUtils::getNadiriiFontPath();
-        $black = imagecolorallocate($im, 255, 255, 255);
-        imagettftext($im, 100, 0, 845, 865, $black, $font_path, $string);
-
         $path = $this->getPagesDirPath($uniqueId);
         $fileName = $this->getPageImageFile($gender, $age, 'finale3', 1, 'L');
-        $a = imagepng($im, $path . '/' . $fileName . '.png');
-        if (!empty($im)) {
-            imagedestroy($im);
-        }
-        $imageData = FileSystemUtils::getImageData($path. '/' . $fileName . '.png');
-        $book->addImage(
-            $path . '/' . $fileName . '.png',
-            $alt,
-            $title,
-            $imageData[0],
-            $imageData[1],
-            $fileName
-        );
+        $resultImagePath = $path . '/' . $fileName . '.png';
+
+        $string = ucfirst(trim($book->getLastName()));
+
+        ImageWorker::prepareThirdFinaleImage($path, $string, $resultImagePath);
+
+        $this->addImageToBook($book, $resultImagePath, $alt, $title, $fileName);
+
         return true;
     }
 
@@ -413,54 +305,6 @@ class BookGenerator {
         $file = Utils::saveFileFromData($handle, FileSystemUtils::getFileRealPath($this->getSmallLettersPath($time) . $iconName . '.png'));
         $imageData = FileSystemUtils::getImageData($file);
         $book->addSmallLetter($file, '', '', $imageData[0], $imageData[1]);
-    }
-
-    function putTextToImage($path, $text, $uniqueId, $font, $options = array()) {
-        // Create image.
-        $image = imagecreatefrompng($path);
-        // Image width and height.
-        $image_width = imagesx($image);
-        $image_height = imagesy($image);
-        $font_size = (!empty($font['size'])) ? $font['size'] : 12;
-        $angle = 0;
-        $text_box = imagettfbbox($font_size, $angle, $font['font'], $text);
-        // Text width and height.
-        $text_width = $text_box[2] - $text_box[0];
-        $text_height = $text_box[1] - $text_box[7];
-        // Calculate coordinates of the text.
-        $x = ($image_width / 2) - ($text_width / 2);
-        $y = (!empty($options['y'])) ? $options['y'] + $text_height : $text_height;
-        // Adding shadow if needed.
-        if (!empty($font['shadow'])) {
-            $shadow_weight = (!empty($font['shadow']['weight'])) ? $font['shadow']['weight'] : 1;
-            $shadow_colours = (!empty($font['shadow']['colour'])) ? $font['shadow']['colour'] : array(
-                0,
-                0,
-                0,
-            );
-            $shadow_colour = imagecolorallocate($image, $shadow_colours[0], $shadow_colours[1], $shadow_colours[2]);
-            imagettftext($image, $font_size, $angle, $x, $y + $shadow_weight, $shadow_colour, $font['font'], $text);
-        }
-        // Adding text.
-        $font_colours = (!empty($font['colour'])) ? $font['colour'] : array(0, 0, 0);
-        $font_colour = imagecolorallocate($image, $font_colours[0], $font_colours[1], $font_colours[2]);
-        imagettftext($image, $font_size, $angle, $x, $y, $font_colour, $font['font'], $text);
-        // Save image.
-        if (!empty($options['saved_path'])) {
-            $saved_path = $options['saved_path'];
-        }
-        else {
-            throw new GenerationException("No path send", $options);
-        }
-        $changedImageHandle = imagepng($image, $saved_path);
-        imagedestroy($image);
-
-        if ($changedImageHandle) {
-            return $saved_path;
-        }
-        else {
-            throw new \RuntimeException('Can not generate image');
-        }
     }
 
     /**
@@ -662,4 +506,48 @@ class BookGenerator {
             );
         }
     }
+
+    /**
+     * @param JsonBook $book
+     * @param $resultImagePath
+     * @param $alt
+     * @param $title
+     * @param $serverImageName
+     */
+    protected function addImageToBook(
+        JsonBook $book,
+        $resultImagePath,
+        $alt,
+        $title,
+        $serverImageName
+    )
+    {
+        $imageData = FileSystemUtils::getImageData($resultImagePath);
+        $book->addImage(
+            $resultImagePath,
+            $alt,
+            $title,
+            $imageData[0],
+            $imageData[1],
+            $serverImageName
+        );
+    }
+
+    /**
+     * @param JsonBook $book
+     * @param $gender
+     * @param $age
+     * @return mixed
+     */
+    protected function setBookBackground(JsonBook $book, $gender, $age)
+    {
+        if (!file_exists($this->getPageImagePath($gender, $age, 'finale2', 1, 'L'))) {
+            $path = FileSystemUtils::getABCPath() . '/background.jpg';
+        } else {
+            $path = $this->getPageImagePath($gender, $age, 'finale2', 1, 'L');
+        }
+        $book->setBackground($path);
+        return $path;
+    }
+
 }
